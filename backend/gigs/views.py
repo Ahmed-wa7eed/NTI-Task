@@ -20,7 +20,7 @@ class GigViewSet(ModelViewSet):
     queryset = Gig.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'genres', 'experience_level', 'payment_type']
+    filterset_fields = ['status','experience_level', 'payment_type']
     search_fields = ['title', 'description', 'venue__venue_name']
     ordering_fields = ['event_date', 'created_at', 'payment_amount']
     ordering = ['-event_date']
