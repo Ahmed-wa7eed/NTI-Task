@@ -98,7 +98,6 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/react-frontend:latest
           severity: HIGH,CRITICAL
           exit-code: 0
-
       # ----------------------------
       # Push Images to DockerHub 
       # ----------------------------
