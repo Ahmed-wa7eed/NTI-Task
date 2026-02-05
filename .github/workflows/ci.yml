@@ -1,4 +1,4 @@
-name: CI Pipeline - Django + React + SonarCloud + ECR
+name: CI Pipeline - Django + React + SonarCloud + ECR (Auto Versioning)
 
 on:
   push:
@@ -16,6 +16,15 @@ jobs:
       # ----------------------------
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      # ----------------------------
+      # Set Automatic Image Version
+      # ----------------------------
+      - name: Set Image Version
+        run: |
+          VERSION="${GITHUB_RUN_NUMBER}.0"
+          echo "IMAGE_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Image version is $VERSION"
 
       # ----------------------------
       # Backend Tests (Django)
@@ -70,7 +79,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       # ----------------------------
       # Login to Amazon ECR
@@ -79,19 +88,25 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       # ----------------------------
-      # Build Docker Images
+      # Build Docker Images (Versioned)
       # ----------------------------
       - name: Build Backend Image
         run: |
-          docker build -t micro-backend ./backend
-          docker tag micro-backend:latest \
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-backend:latest
+          docker build -t backend:${IMAGE_VERSION} ./backend
+          docker tag backend:${IMAGE_VERSION} \
+            695094375859.dkr.ecr.us-east-1.amazonaws.com/backend:${IMAGE_VERSION}
+
+          docker tag backend:${IMAGE_VERSION} \
+            695094375859.dkr.ecr.us-east-1.amazonaws.com/backend:latest
 
       - name: Build Frontend Image
         run: |
-          docker build -t micro-frontend ./frontend
-          docker tag micro-frontend:latest \
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-frontend:latest
+          docker build -t frontend:${IMAGE_VERSION} ./frontend
+          docker tag frontend:${IMAGE_VERSION} \
+            695094375859.dkr.ecr.us-east-1.amazonaws.com/frontend:${IMAGE_VERSION}
+
+          docker tag frontend:${IMAGE_VERSION} \
+            695094375859.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
 
       # ----------------------------
       # Trivy Scan Images
@@ -99,14 +114,14 @@ jobs:
       - name: Trivy Scan Backend Image
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-backend:latest
+          image-ref: 695094375859.dkr.ecr.us-east-1.amazonaws.com/backend:${{ env.IMAGE_VERSION }}
           severity: HIGH,CRITICAL
           exit-code: 0
 
       - name: Trivy Scan Frontend Image
         uses: aquasecurity/trivy-action@0.20.0
         with:
-          image-ref: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-frontend:latest
+          image-ref: 695094375859.dkr.ecr.us-east-1.amazonaws.com/frontend:${{ env.IMAGE_VERSION }}
           severity: HIGH,CRITICAL
           exit-code: 0
 
@@ -115,8 +130,10 @@ jobs:
       # ----------------------------
       - name: Push Backend Image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-backend:latest
+          docker push 695094375859.dkr.ecr.us-east-1.amazonaws.com/backend:${IMAGE_VERSION}
+          docker push 695094375859.dkr.ecr.us-east-1.amazonaws.com/backend:latest
 
       - name: Push Frontend Image to ECR
         run: |
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/micro-frontend:latest
+          docker push 695094375859.dkr.ecr.us-east-1.amazonaws.com/frontend:${IMAGE_VERSION}
+          docker push 695094375859.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
