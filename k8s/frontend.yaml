@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ahmed3013/front_image:3.0
+          image: 695094375859.dkr.ecr.us-east-1.amazonaws.com/image-frontend:3.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
